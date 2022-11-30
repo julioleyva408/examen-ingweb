@@ -1,0 +1,97 @@
+//
+//  CoreDataManager.swift
+//  examening
+//
+//  Created by Julio Leyva on 22/11/22.
+//
+
+import Foundation
+import CoreData
+
+class CoreDataManager {
+    let persistentContainer :NSPersistentContainer
+    
+    init(){
+        persistentContainer = NSPersistentContainer(name: "Mobiliario")
+        persistentContainer.loadPersistentStores(completionHandler: {
+            (description, error) in
+            if let error = error {
+                fatalError("Core data failed to initizliazee \(error.localizedDescription)")
+            }
+            
+        })
+    }
+    
+    func guardarProducto(categoria: String, existencia:String , logid: String , nombre: String, precio: String){
+        let Mobiliario = Mobiliario(context: persistentContainer.viewContext)
+        Mobiliario.categoria = categoria
+        Mobiliario.existencia = existencia
+        Mobiliario.logid = logid
+        Mobiliario.nombre = nombre
+        Mobiliario.precio = precio
+        
+        do {
+            try persistentContainer.viewContext.save()
+            print("producto guardado")
+        }
+        catch{
+            print("Failed to save error en \(error)")
+        }
+    }
+    
+    func leerTodosLosProductos() -> [Mobiliario]{
+        let fetchRequest : NSFetchRequest<Mobiliario> = Mobiliario.fetchRequest()
+        
+        do{
+            return try persistentContainer.viewContext.fetch(fetchRequest)
+        }
+        catch{
+            return[]
+        }
+    
+        func leerMobiliario(logid:String)  ->Mobiliario?{
+            let fetchRequest : NSFetchRequest<Mobiliario> = Mobiliario.fetchRequest()
+            let predicate = NSPredicate(format: "logid = %@",logid)
+            fetchRequest.predicate = predicate
+            
+            do {
+                let datos = try persistentContainer.viewContext.fetch(fetchRequest)
+                return datos.first
+            
+            }
+            catch{
+                print("Failed to save error en \(error)")
+            }
+            return nil
+        }
+    
+    }
+    func actualizaMobiliario(mobiliario: Mobiliario){
+        let fetchRequest : NSFetchRequest<Mobiliario> = Mobiliario.fetchRequest()
+        let predicate = NSPredicate(format: "nombre = %@",mobiliario.nombre ?? "")
+        fetchRequest.predicate = predicate
+        
+        do {
+            let datos = try persistentContainer.viewContext.fetch(fetchRequest)
+            let m = datos.first
+            m?.nombre = mobiliario.nombre
+            m?.precio = mobiliario.precio
+            try persistentContainer.viewContext.save()
+            print("producto guardado")
+        }
+        catch{
+            print("Failed to save error en \(error)")
+        }
+    }
+    func borrarMobiliario(mobiliario: Mobiliario){
+        persistentContainer.viewContext.delete(mobiliario)
+        
+        do{
+            try persistentContainer.viewContext.save()
+        }catch{
+            persistentContainer.viewContext.rollback()
+            print("Failed to save context \(error.localizedDescription)")
+        }
+        
+    }
+}
