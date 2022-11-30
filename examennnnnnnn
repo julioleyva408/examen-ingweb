@@ -1,0 +1,100 @@
+//
+//  ContentView.swift
+//  examening
+//
+//  Created by Julio Leyva  on 22/11/22.
+//
+
+import SwiftUI
+import CoreData
+
+struct ContentView: View {
+    let coreDM: CoreDataManager
+    @State var categoria = ""
+    @State var existencia = ""
+    @State var logid = ""
+    @State var nombre = ""
+    @State var precio = ""
+    @State var seleccionado: Mobiliario?
+    @State var mobArray = [Mobiliario]()
+    var body: some View {
+        VStack{
+            TextField("Categoria Mobiliario",text: $categoria)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            TextField("Existencia Mobiliario",text: $existencia)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            TextField("ID Mobiliario",text: $logid)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            TextField("Nombre Mobiliario",text: $nombre)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            TextField("Precio Mobiliario",text: $precio)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            Button("Save "){
+                if	(seleccionado != nil){
+                   
+                    seleccionado?.precio = precio
+                    seleccionado?.existencia = existencia
+                    seleccionado?.categoria = categoria
+                    seleccionado?.nombre = nombre
+                    seleccionado?.logid = logid
+                    coreDM.actualizaMobiliario(mobiliario: seleccionado!)
+                }else{
+                    coreDM.guardarProducto( categoria: categoria, existencia: existencia, logid: logid, nombre: nombre, precio: precio)
+                }
+                mostrarMobiliarios()
+                categoria = ""
+                existencia = ""
+                logid = ""
+                nombre = ""
+                precio = ""
+                seleccionado = nil
+                
+            }
+            List{
+                ForEach(mobArray, id: \.self){
+                    prod in
+                    VStack{
+                        Text(prod.categoria ?? "")
+                        Text(prod.existencia ?? "")
+                        Text(prod.logid ?? "")
+                        Text(prod.nombre ?? "")
+                        Text(prod.precio ?? "")
+                        
+                    }
+                    .onTapGesture{
+                        seleccionado = prod
+                        logid = prod.logid ?? ""
+                        nombre = prod.nombre ?? ""
+                        categoria = prod.categoria ?? ""
+                        existencia = prod.existencia ?? ""
+                        precio = prod.precio ?? ""
+                    }
+                }
+                .onDelete(perform:{
+                    IndexSet in
+                    IndexSet.forEach({index in
+                        let Mobiliario = mobArray[index]
+                        coreDM.borrarMobiliario(mobiliario:  Mobiliario)
+                        mostrarMobiliarios()
+                        
+                    })
+                })
+            
+    }
+        Spacer()
+        } .padding()
+        .onAppear(perform: { mostrarMobiliarios()
+            
+        })
+    }
+    
+    func  mostrarMobiliarios(){
+        mobArray = coreDM.leerTodosLosProductos()
+    }
+}
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView(coreDM:CoreDataManager())
+    }
+}
+
